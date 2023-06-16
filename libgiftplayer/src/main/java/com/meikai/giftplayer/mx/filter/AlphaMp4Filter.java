@@ -15,33 +15,37 @@ import java.nio.ByteOrder;
  * MP4是特殊的形式，左半边取alpha，右半边取rgb
  */
 public class AlphaMp4Filter extends Filter {
-    private static final String vertexShader = "attribute vec2 a_position;\n"
-            + "attribute vec2 a_texCoord;\n"
-            + "varying vec2 v_texCoord;\n"
+    private static final String vertexShader = "attribute highp vec2 a_position;\n"
+            + "attribute highp vec2 a_texCoord;\n"
+            + "varying highp vec2 l_TexCoordinate;\n"
+            + "varying highp vec2 r_TexCoordinate;\n"
             + "uniform mat4 transform;\n"
             + "void main(void) {\n"
             + "gl_Position = vec4(a_position, 0.0, 1.0);\n"
-            + "v_texCoord = a_texCoord;\n"
+            + "r_TexCoordinate = a_texCoord;\n"
+            + "r_TexCoordinate.x = a_texCoord.x * transform[0][0];\n"
+            + "r_TexCoordinate.y = a_texCoord.y * transform[1][1];\n"
+            + "float midX = (transform * vec4(0.5, 0.0, 0.0, 1.0)).x;\n"
+            + "l_TexCoordinate = vec2(r_TexCoordinate.x - midX, r_TexCoordinate.y);\n"
             + "}\n";
 
     private static final String alphaShader = "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
-            + "varying vec2 v_texCoord;\n"
-            + "uniform mat4 transform;\n"
             + "uniform samplerExternalOES sTexture;\n"
+            + "varying highp vec2 l_TexCoordinate;\n"
+            + "varying highp vec2 r_TexCoordinate;\n"
             + "void main() {\n"
-            + "float midX = (transform * vec4(0.5,0,0,0)).x;\n"
-            + "vec2 RTex = v_texCoord;\n"
-            + "vec2 LTex = vec2(RTex.x-midX,RTex.y);\n"
-            +" vec4 color = texture2D(sTexture,RTex);\n"
-            +" vec4 alpha = texture2D(sTexture,LTex);\n"
-            + "gl_FragColor = vec4(color.rgb,alpha.r);\n"
+            + "vec4 color = texture2D(sTexture, r_TexCoordinate);\n"
+            + "vec4 alpha = texture2D(sTexture, l_TexCoordinate);\n"
+            + "gl_FragColor = vec4(color.rgb, alpha.r);\n"
             + "}\n";
 
 
     private float[] triangleVerticesData;
 
     private float[] textureTransform;
+
+    private boolean measured = false;
 
 
     public AlphaMp4Filter() {
@@ -85,11 +89,15 @@ public class AlphaMp4Filter extends Filter {
         }
 
         float wW = (int) (Math.ceil(videoWidth / 16f) * 16);
+        float wH = (int) (Math.ceil(videoHeight / 16f) * 16);
         float sx = videoWidth / wW;
-        textureTransform = new float[]{ sx, 0, 0, 0,
-                0, 1, 0, 0,
+        float sy = videoHeight / wH;
+        textureTransform = new float[]{
+                sx, 0, 0, 0,
+                0, sy, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1};
+        measured = true;
     }
 
     @Override
@@ -116,7 +124,7 @@ public class AlphaMp4Filter extends Filter {
     public void onDraw(final int textureId) {
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glUseProgram(mGLProgramId);
-        if (!mIsInitialized) {
+        if (!mIsInitialized || !measured) {
             return;
         }
 
