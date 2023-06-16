@@ -5,7 +5,6 @@ import android.opengl.GLES20;
 import android.view.Surface;
 
 import com.meikai.giftplayer.AlphaMp4Log;
-import com.meikai.giftplayer.GLTextureView;
 import com.meikai.giftplayer.mx.filter.AlphaMp4Filter;
 import com.meikai.giftplayer.mx.filter.Filter;
 

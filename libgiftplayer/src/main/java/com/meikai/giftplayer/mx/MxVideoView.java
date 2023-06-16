@@ -12,7 +12,6 @@ import android.util.AttributeSet;
 import android.view.Surface;
 
 import com.meikai.giftplayer.AlphaMp4Log;
-import com.meikai.giftplayer.GLTextureView;
 
 import java.io.File;
 import java.io.FileDescriptor;
