@@ -6,14 +6,23 @@ public class TextureCropUtil {
                                               float videoWidth, float videoHeight) {
         videoWidth = videoWidth / 2f;
         float videoRatio = videoWidth / videoHeight;
+        float viewRatio = viewWidth / viewHeight;
         float ratioX, ratioY;
         float leftRatio, rightRatio, topRatio, bottomRatio;
 
-        // 高度缩放到viewHeight，裁剪左右
-        videoHeight = viewHeight;
-        videoWidth = videoHeight * videoRatio;
-        ratioX = (1 - (viewWidth / videoWidth)) / 2;
-        ratioY = 0;
+        if (videoRatio < viewRatio) {
+            // 高度缩放到viewWidth，裁剪上下
+            videoWidth = viewWidth;
+            videoHeight = videoWidth / videoRatio;
+            ratioX = 0;
+            ratioY = (1 - (viewHeight / videoHeight)) / 2;
+        } else {
+            // 高度缩放到viewHeight，裁剪左右
+            videoHeight = viewHeight;
+            videoWidth = videoHeight * videoRatio;
+            ratioX = (1 - (viewWidth / videoWidth)) / 2;
+            ratioY = 0;
+        }
 
         //  等比例缩放铺满全屏，裁剪视频多余部分
         leftRatio = ratioX;
